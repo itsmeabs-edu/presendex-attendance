@@ -11,13 +11,22 @@ PresenDex is a school attendance project built around an ESP32 terminal and a se
 - The prototype uses learner IDs only. Use made-up IDs while developing.
 - There is no camera or ESP32 connection yet. Later, a QR reader or ESP32 can send a learner ID to the same API.
 
-The whole project folder, including `logo.png`, can be copied to the school laptop and run there. The database stays on the computer where the app is running, though, so records will not automatically appear on both computers. A shared online database and always-available hosting are later steps.
+The database stays on the computer where the app is running, so attendance records will not automatically appear on both computers. A shared online database and always-available hosting are later steps.
 
 The project files are shared in a **public GitHub repository** so schools and other students can view and reuse the code. The logo, code, and setup notes are public; `presendex.db`, `.env`, and real attendance data must stay private and out of GitHub. GitHub keeps project files available across computers, but it does not sync attendance records or keep the app running by itself.
 
 ## Run on Fedora or Ubuntu 22.04
 
-You need Python 3.10 or newer. From this folder:
+To get the project on a computer, clone the public repository once:
+
+```bash
+git clone https://github.com/itsmeabs-edu/presendex-attendance.git
+cd presendex-attendance
+```
+
+To bring in later project-file updates on that computer, run `git pull` from the project folder. When you make code changes on one computer, commit and push them to GitHub; then run `git pull` on the other. These steps sync code, notes, and the logo, not attendance records.
+
+You need Python 3.10 or newer. From the project folder:
 
 ```bash
 python3 -m venv .venv
