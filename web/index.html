@@ -3,34 +3,55 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#83cbd9">
-  <title>PresenDex · Attendance</title>
+  <meta name="theme-color" content="#eaf8fa">
+  <title>PresenDex · School attendance</title>
   <link rel="stylesheet" href="/assets/css/styles.css">
-  <script src="/assets/js/app.js" defer></script>
+  <script src="/assets/js/home.js" defer></script>
 </head>
-<body>
-  <header><img src="/logo.png" alt="PresenDex"></header>
+<body class="home-page">
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="PresenDex home"><img src="/logo.png" alt="PresenDex"></a>
+    <nav class="header-actions" aria-label="Main navigation">
+      <a class="text-link" href="#how-it-works">How it works</a>
+      <a class="button button-light" href="/login">Sign in</a>
+    </nav>
+  </header>
+
   <main>
-    <section class="card" aria-labelledby="title">
-      <h1 id="title">Attendance check-in</h1>
-      <p class="intro">Enter a learner ID to record today's demo attendance.</p>
-      <form id="checkin-form">
-        <label for="learner-id">Learner ID</label>
-        <input id="learner-id" name="learner_id" autocomplete="off" maxlength="40" pattern="[A-Za-z0-9_-]+" placeholder="For example: DEMO-001" required>
-        <button type="submit">Check in</button>
-      </form>
-      <p id="message" role="status" aria-live="polite"></p>
-      <p class="hint">Use made-up IDs during development. This prototype stores records on this computer.</p>
-      <h2>Attendance report</h2>
-      <form class="report-controls" id="report-form">
-        <label for="report-date">Attendance date</label>
-        <input id="report-date" type="date" required>
-        <button type="submit">Show report</button>
-        <a class="download" id="download-csv" href="/attendance/export.csv">Download CSV</a>
-      </form>
-      <p id="report-summary" aria-live="polite"></p>
-      <ul id="attendance-list" aria-live="polite"></ul>
+    <section class="hero-section">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="status-dot"></span> A clearer school day starts here</p>
+        <h1>Attendance, made <span class="accent-text">simple.</span></h1>
+        <p class="hero-description">A friendly way for school admins and teachers to manage classes, keep attendance, and find the records they need.</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="/login">Sign in to PresenDex <span aria-hidden="true">→</span></a>
+          <a class="button button-secondary" id="setup-link" href="/setup" hidden>Set up your school</a>
+        </div>
+        <p class="hero-note">Designed for school teams. Your school manages its own attendance records.</p>
+      </div>
+      <div class="hero-art" aria-label="PresenDex attendance dashboard preview" role="img">
+        <div class="preview-window">
+          <div class="preview-topbar"><span></span><span></span><span></span><b>Today at a glance</b></div>
+          <div class="preview-content">
+            <div class="preview-heading"><div><small>CLASS 8A</small><strong>Morning attendance</strong></div><span class="live-pill">● In progress</span></div>
+            <div class="preview-stats"><div><small>Present</small><strong>28</strong></div><div><small>To check in</small><strong>3</strong></div><div><small>Class teacher</small><strong>Ms. Riya</strong></div></div>
+            <div class="preview-list"><div><span class="avatar avatar-blue">A</span><span><b>Aarav</b><small>Checked in at 8:42</small></span><i>Present</i></div><div><span class="avatar avatar-mint">M</span><span><b>Meera</b><small>Checked in at 8:45</small></span><i>Present</i></div><div><span class="avatar avatar-lilac">S</span><span><b>Sam</b><small>Waiting for check-in</small></span><i class="pending">Unmarked</i></div></div>
+          </div>
+        </div>
+        <div class="floating-note"><span class="note-check">✓</span><span><b>Ready when you are</b><small>Clear records, one class at a time</small></span></div>
+      </div>
+    </section>
+
+    <section class="features-section" id="how-it-works">
+      <div class="section-heading"><p class="eyebrow">Made for your school</p><h2>Everything in its right place.</h2><p>Simple tools for the people who keep a school day running.</p></div>
+      <div class="feature-grid">
+        <article class="feature-card"><span class="feature-icon icon-admin">✦</span><h3>One clear admin view</h3><p>Set up classes, create teacher accounts, and assign a class teacher.</p></article>
+        <article class="feature-card"><span class="feature-icon icon-teacher">▤</span><h3>Teacher's class, at a glance</h3><p>Teachers manage learners and attendance for the classes assigned to them.</p></article>
+        <article class="feature-card"><span class="feature-icon icon-report">↗</span><h3>Records you can use</h3><p>Update attendance by date and download a class report when needed.</p></article>
+      </div>
     </section>
   </main>
+
+  <footer class="site-footer"><span>PresenDex</span><span>School attendance, made clearer.</span><a href="https://github.com/itsmeabs-edu/presendex-attendance">Open project source</a></footer>
 </body>
 </html>
