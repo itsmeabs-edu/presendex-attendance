@@ -1,13 +1,15 @@
 """Small local attendance API for the PresenDex prototype."""
 
 from contextlib import asynccontextmanager
+import csv
 from datetime import date, datetime, timezone
+from io import StringIO
 import os
 from pathlib import Path
 import sqlite3
 
 from fastapi import FastAPI, Query
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.responses import JSONResponse
@@ -123,6 +125,27 @@ def list_attendance(attendance_date: date | None = Query(default=None)) -> list[
         )
         for row in rows
     ]
+
+
+@app.get("/attendance/export.csv", include_in_schema=True)
+def export_attendance(attendance_date: date | None = Query(default=None)) -> Response:
+    day = attendance_date or date.today()
+    with connect_db() as db:
+        rows = db.execute(
+            "SELECT learner_id, attendance_date, checked_in_at FROM attendance WHERE attendance_date = ? ORDER BY checked_in_at",
+            (day.isoformat(),),
+        ).fetchall()
+
+    output = StringIO(newline="")
+    writer = csv.writer(output)
+    writer.writerow(["learner_id", "attendance_date", "checked_in_at_utc"])
+    writer.writerows((row["learner_id"], row["attendance_date"], row["checked_in_at"]) for row in rows)
+    filename = f"presendex-attendance-{day.isoformat()}.csv"
+    return Response(
+        content=output.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 @app.delete("/attendance", status_code=204)
