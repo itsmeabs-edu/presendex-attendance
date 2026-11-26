@@ -1,9 +1,9 @@
 """Validated request shapes used by the PresenDex API."""
 
-from datetime import date
+from datetime import date, time
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class AdminSetupRequest(BaseModel):
@@ -50,3 +50,22 @@ class AttendanceUpdateRequest(BaseModel):
 class PasswordChangeRequest(BaseModel):
     current_password: str = Field(min_length=1, max_length=128)
     new_password: str = Field(min_length=12, max_length=128)
+
+
+class AttendanceScheduleUpdateRequest(BaseModel):
+    class_id: int | None = None
+    weekday: int | None = Field(default=None, ge=0, le=4)
+    specific_date: date | None = None
+    start_time: time | None
+
+    @model_validator(mode="after")
+    def validate_scope(self) -> "AttendanceScheduleUpdateRequest":
+        if self.weekday is not None and self.specific_date is not None:
+            raise ValueError("Choose either a weekday or a specific date.")
+        if self.start_time is not None and self.start_time.second != 0:
+            raise ValueError("School start time must use whole minutes.")
+        return self
+
+
+class StudentCheckInRequest(BaseModel):
+    student_code: str = Field(min_length=1, max_length=24, str_strip_whitespace=True)

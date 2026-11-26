@@ -54,10 +54,24 @@
         <div class="workspace-controls">
           <div class="field-group"><label for="workspace-class">Class</label><select id="workspace-class"><option value="">Choose a class</option></select></div>
           <div class="field-group"><label for="attendance-date">Attendance date</label><input id="attendance-date" type="date"></div>
+          <div class="field-group"><label for="marked-days">Days with attendance</label><select id="marked-days"><option value="">No marked days yet</option></select></div>
           <a id="csv-download" class="button button-secondary" href="#" aria-disabled="true">Download report</a>
         </div>
         <div id="class-empty" class="empty-state">Choose a class to see its students and attendance.</div>
         <div id="class-tools" hidden>
+          <section class="panel schedule-panel" id="schedule-panel">
+            <div class="section-title-row"><div><p class="eyebrow">Attendance timing</p><h3>School start time</h3></div></div>
+            <p id="schedule-effective" class="small-note">Loading the effective start time…</p>
+            <form id="schedule-form" class="schedule-form">
+              <div class="field-group" id="schedule-target-group"><label for="schedule-target">Applies to</label><select id="schedule-target"><option value="school">Whole school</option><option value="class">This class</option></select></div>
+              <div class="field-group"><label for="schedule-scope">Schedule type</label><select id="schedule-scope"><option value="default">General default</option><option value="weekday">Weekday</option><option value="date">Specific date</option></select></div>
+              <div class="field-group" id="schedule-weekday-group" hidden><label for="schedule-weekday">Weekday</label><select id="schedule-weekday"><option value="0">Monday</option><option value="1">Tuesday</option><option value="2">Wednesday</option><option value="3">Thursday</option><option value="4">Friday</option></select></div>
+              <div class="field-group" id="schedule-date-group" hidden><label for="schedule-date">Specific date</label><input id="schedule-date" type="date"></div>
+              <div class="field-group"><label for="schedule-start-time">Starting time</label><input id="schedule-start-time" type="time" required></div>
+              <button class="button button-primary" type="submit">Save start time</button>
+            </form>
+            <div id="schedule-list" class="schedule-list"></div>
+          </section>
           <form id="student-form" class="inline-form">
             <div><label for="student-name">Add a student to this class</label><input id="student-name" minlength="2" maxlength="120" placeholder="Student's name" required></div>
             <button class="button button-primary" type="submit">Add student</button>
@@ -66,6 +80,11 @@
             <section><h3>Student list</h3><p class="small-note">Download a QR image for an active student to print. Camera scanning will be added later.</p><div id="student-list" class="student-list"></div></section>
             <section><div class="section-title-row"><h3>Daily attendance</h3><button class="button button-light button-small" id="load-attendance" type="button">Refresh</button></div><p class="small-note">Choose a status and save. Past dates can be corrected too.</p><div id="attendance-list" class="attendance-list"></div></section>
           </div>
+          <section class="panel summary-panel">
+            <div class="section-title-row"><div><p class="eyebrow">All recorded days</p><h3>Student attendance overview</h3></div></div>
+            <p class="small-note">Attendance rate counts present and late days among days with a saved status.</p>
+            <div class="attendance-summary-wrap"><table class="attendance-summary-table"><thead><tr><th>Student</th><th>Rate</th><th>Present</th><th>Late</th><th>Absent</th><th>Excused</th><th>Days recorded</th></tr></thead><tbody id="attendance-summary"></tbody></table></div>
+          </section>
         </div>
       </section>
     </div>

@@ -4,7 +4,7 @@ import csv
 import os
 import re
 import secrets
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timezone
 from io import BytesIO, StringIO
 from pathlib import Path
 
@@ -13,20 +13,22 @@ import qrcode
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
 from .database import Base, engine, get_db
-from .models import Account, AttendanceRecord, SchoolClass, Student
+from .models import Account, AttendanceRecord, AttendanceSchedule, SchoolClass, Student
 from .schemas import (
     AdminSetupRequest,
+    AttendanceScheduleUpdateRequest,
     AttendanceUpdateRequest,
     ClassCreateRequest,
     ClassUpdateRequest,
     LoginRequest,
     PasswordChangeRequest,
+    StudentCheckInRequest,
     StudentCreateRequest,
     StudentUpdateRequest,
     TeacherCreateRequest,
@@ -110,6 +112,42 @@ def get_accessible_class(db: Session, account: Account, class_id: int) -> School
     if account.role == "teacher" and school_class.class_teacher_id != account.id:
         raise HTTPException(status_code=403, detail="You can only manage your assigned classes.")
     return school_class
+
+
+
+
+def resolve_start_time(db: Session, class_id: int, on_date: date) -> AttendanceSchedule | None:
+    """Resolve the most specific schedule: date, weekday, then default; class overrides school."""
+    weekday = on_date.weekday()
+    rules = db.scalars(
+        select(AttendanceSchedule).where(
+            or_(AttendanceSchedule.class_id.is_(None), AttendanceSchedule.class_id == class_id)
+        )
+    ).all()
+
+    def priority(rule: AttendanceSchedule) -> int:
+        if rule.specific_date == on_date:
+            return 60 if rule.class_id == class_id else 50
+        if rule.specific_date is not None:
+            return -1
+        if rule.weekday == weekday:
+            return 40 if rule.class_id == class_id else 30
+        if rule.weekday is not None:
+            return -1
+        return 20 if rule.class_id == class_id else 10
+
+    matching = [rule for rule in rules if priority(rule) >= 0]
+    return max(matching, key=priority) if matching else None
+
+
+def schedule_summary(rule: AttendanceSchedule) -> dict[str, object]:
+    return {
+        "id": rule.id,
+        "class_id": rule.class_id,
+        "weekday": rule.weekday,
+        "specific_date": rule.specific_date.isoformat() if rule.specific_date else None,
+        "start_time": rule.start_time.strftime("%H:%M"),
+    }
 
 
 def csv_value(value: object) -> object:
@@ -409,6 +447,151 @@ def update_student(
     return student_summary(student)
 
 
+
+
+@app.get("/api/classes/{class_id}/schedules")
+def list_schedules(
+    class_id: int,
+    for_date: date | None = None,
+    account: Account = Depends(get_active_account),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    get_accessible_class(db, account, class_id)
+    rules = db.scalars(
+        select(AttendanceSchedule)
+        .where(or_(AttendanceSchedule.class_id.is_(None), AttendanceSchedule.class_id == class_id))
+        .order_by(AttendanceSchedule.class_id, AttendanceSchedule.weekday, AttendanceSchedule.specific_date)
+    ).all()
+    selected_date = for_date or date.today()
+    effective = resolve_start_time(db, class_id, selected_date)
+    return {
+        "rules": [schedule_summary(rule) for rule in rules],
+        "effective": {
+            "start_time": effective.start_time.strftime("%H:%M"),
+            "class_id": effective.class_id,
+            "weekday": effective.weekday,
+            "specific_date": effective.specific_date.isoformat() if effective.specific_date else None,
+        } if effective else None,
+    }
+
+
+@app.put("/api/schedules")
+def update_schedule(
+    payload: AttendanceScheduleUpdateRequest,
+    account: Account = Depends(get_active_account),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    if account.role == "teacher":
+        if payload.class_id is None:
+            raise HTTPException(status_code=403, detail="Teachers can only change their own class schedule.")
+        get_accessible_class(db, account, payload.class_id)
+    elif payload.class_id is not None and db.get(SchoolClass, payload.class_id) is None:
+        raise HTTPException(status_code=404, detail="Class not found.")
+
+    filters = [
+        AttendanceSchedule.class_id.is_(None) if payload.class_id is None else AttendanceSchedule.class_id == payload.class_id,
+        AttendanceSchedule.weekday.is_(None) if payload.weekday is None else AttendanceSchedule.weekday == payload.weekday,
+        AttendanceSchedule.specific_date.is_(None) if payload.specific_date is None else AttendanceSchedule.specific_date == payload.specific_date,
+    ]
+    rule = db.scalar(select(AttendanceSchedule).where(*filters))
+    if payload.start_time is None:
+        if rule is not None:
+            db.delete(rule)
+            db.commit()
+        return {"deleted": rule is not None}
+
+    if rule is None:
+        rule = AttendanceSchedule(
+            class_id=payload.class_id,
+            weekday=payload.weekday,
+            specific_date=payload.specific_date,
+            start_time=payload.start_time,
+            updated_by_id=account.id,
+        )
+        db.add(rule)
+    else:
+        rule.start_time = payload.start_time
+        rule.updated_by_id = account.id
+    db.commit()
+    db.refresh(rule)
+    return schedule_summary(rule)
+
+
+@app.delete("/api/schedules/{schedule_id}", status_code=204)
+def delete_schedule(
+    schedule_id: int,
+    account: Account = Depends(get_active_account),
+    db: Session = Depends(get_db),
+) -> Response:
+    rule = db.get(AttendanceSchedule, schedule_id)
+    if rule is None:
+        raise HTTPException(status_code=404, detail="Schedule rule not found.")
+    if account.role == "teacher":
+        if rule.class_id is None:
+            raise HTTPException(status_code=403, detail="Teachers cannot change the school-wide schedule.")
+        get_accessible_class(db, account, rule.class_id)
+    db.delete(rule)
+    db.commit()
+    return Response(status_code=204)
+
+
+
+
+@app.get("/api/classes/{class_id}/attendance/dates")
+def attendance_dates(
+    class_id: int,
+    account: Account = Depends(get_active_account),
+    db: Session = Depends(get_db),
+) -> list[str]:
+    get_accessible_class(db, account, class_id)
+    dates = db.scalars(
+        select(AttendanceRecord.attendance_date)
+        .join(Student, Student.id == AttendanceRecord.student_id)
+        .where(Student.class_id == class_id)
+        .distinct()
+        .order_by(AttendanceRecord.attendance_date.desc())
+    ).all()
+    return [marked_date.isoformat() for marked_date in dates]
+
+
+@app.get("/api/classes/{class_id}/attendance/summary")
+def attendance_summary(
+    class_id: int,
+    account: Account = Depends(get_active_account),
+    db: Session = Depends(get_db),
+) -> list[dict[str, object]]:
+    get_accessible_class(db, account, class_id)
+    students = db.scalars(
+        select(Student).where(Student.class_id == class_id, Student.is_active.is_(True)).order_by(Student.full_name)
+    ).all()
+    totals: dict[int, dict[str, int]] = {
+        student.id: {"present": 0, "late": 0, "absent": 0, "excused": 0}
+        for student in students
+    }
+    records = db.execute(
+        select(AttendanceRecord.student_id, AttendanceRecord.status)
+        .join(Student, Student.id == AttendanceRecord.student_id)
+        .where(Student.class_id == class_id, Student.is_active.is_(True))
+    ).all()
+    for student_id, status in records:
+        totals[student_id][status] += 1
+
+    result = []
+    for student in students:
+        counts = totals[student.id]
+        days_recorded = sum(counts.values())
+        attended = counts["present"] + counts["late"]
+        result.append({
+            "student_id": student.id,
+            "full_name": student.full_name,
+            "student_code": student.student_code,
+            **counts,
+            "days_recorded": days_recorded,
+            "attendance_rate": round(attended * 100 / days_recorded, 1) if days_recorded else None,
+        })
+    return result
+
+
 @app.get("/api/classes/{class_id}/attendance")
 def attendance_for_day(
     class_id: int,
@@ -484,6 +667,61 @@ def mark_attendance(
         "attendance_date": record.attendance_date.isoformat(),
         "status": record.status,
         "checked_in_at": record.checked_in_at.isoformat() if record.checked_in_at else None,
+    }
+
+
+
+
+@app.post("/api/classes/{class_id}/check-in")
+def check_in_student(
+    class_id: int,
+    payload: StudentCheckInRequest,
+    account: Account = Depends(get_active_account),
+    db: Session = Depends(get_db),
+) -> dict[str, object]:
+    get_accessible_class(db, account, class_id)
+    student = db.scalar(
+        select(Student).where(
+            Student.student_code == payload.student_code,
+            Student.class_id == class_id,
+            Student.is_active.is_(True),
+        )
+    )
+    if student is None:
+        raise HTTPException(status_code=404, detail="Active student code not found in this class.")
+
+    school_now = datetime.now().astimezone()
+    today = school_now.date()
+    record = db.scalar(
+        select(AttendanceRecord).where(
+            AttendanceRecord.student_id == student.id,
+            AttendanceRecord.attendance_date == today,
+        )
+    )
+    if record is not None:
+        return {
+            "student_id": student.id,
+            "full_name": student.full_name,
+            "status": record.status,
+            "already_recorded": True,
+        }
+
+    start_rule = resolve_start_time(db, class_id, today)
+    status = "late" if start_rule and school_now.time().replace(tzinfo=None) > start_rule.start_time else "present"
+    record = AttendanceRecord(
+        student_id=student.id,
+        attendance_date=today,
+        status=status,
+        checked_in_at=datetime.now(timezone.utc),
+        marked_by_id=account.id,
+    )
+    db.add(record)
+    db.commit()
+    return {
+        "student_id": student.id,
+        "full_name": student.full_name,
+        "status": status,
+        "already_recorded": False,
     }
 
 

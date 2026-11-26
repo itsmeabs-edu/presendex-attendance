@@ -12,6 +12,7 @@ PresenDex is a school attendance project with separate admin and teacher workspa
 - Server-side class permissions: teachers can only manage classes assigned to them.
 - Attendance records that authorized teachers can add or correct for any date, with a CSV download.
 - Downloadable QR images for active students, containing only their student code.
+- Class attendance summaries, marked-day navigation, configurable school/class start times, and a protected present/late check-in API.
 - SQLite database stored locally on the computer running PresenDex.
 
 ## Project layout
@@ -53,6 +54,6 @@ To get later code and page updates on the other computer, run `git pull` in its 
 
 ## Database and privacy
 
-The database currently has `accounts`, `classes`, `students`, and `attendance_records` tables. Passwords are stored as Argon2 hashes, never as readable text. The `.gitignore` rules exclude databases and environment files from the public repository.
+The database currently has `accounts`, `classes`, `students`, `attendance_records`, and `attendance_schedules` tables. Passwords are stored as Argon2 hashes, never as readable text. The `.gitignore` rules exclude databases and environment files from the public repository.
 
 This version is local-only. Before hosting it for a school, we still need to configure a strong session secret, use HTTPS, add account recovery and sign-in rate limits, plan schema migrations and backups, and get school approval for the student data and retention plan. Read [the database and QR-code plan](docs/DATABASE.md).
