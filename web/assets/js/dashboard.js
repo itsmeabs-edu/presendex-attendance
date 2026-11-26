@@ -527,6 +527,7 @@ async function loadDashboard() {
   workspace.hidden = false;
   const isAdmin = currentAccount.role === 'admin';
   document.querySelector('#admin-tools').hidden = !isAdmin;
+  document.querySelector('#schedule-target-group').hidden = !isAdmin;
 
   try {
     if (isAdmin) await loadTeachers();
