@@ -11,6 +11,14 @@ PresenDex is a school attendance project built around an ESP32 terminal and a se
 - The prototype uses learner IDs only. Use made-up IDs while developing.
 - There is no camera or ESP32 connection yet. Later, a QR reader or ESP32 can send a learner ID to the same API.
 
+## Project layout
+
+- `backend/main.py` — FastAPI routes and the local SQLite database.
+- `web/index.html` — page structure and content.
+- `web/assets/css/styles.css` — page appearance.
+- `web/assets/js/app.js` — check-in form, date filter, and report loading.
+- `docs/DATABASE.md` — the planned path from local prototype storage to a shared database.
+
 The database stays on the computer where the app is running, so attendance records will not automatically appear on both computers. A shared online database and always-available hosting are later steps.
 
 The project files are shared in a **public GitHub repository** so schools and other students can view and learn from the code. The logo, code, and setup notes are public; `presendex.db`, `.env`, and real attendance data must stay private and out of GitHub. GitHub keeps project files available across computers, but it does not sync attendance records or keep the app running by itself. The repository has no license file yet, so its reuse terms have not been selected.
@@ -38,6 +46,8 @@ uvicorn backend.main:app --reload
 Open <http://127.0.0.1:8000> for the attendance page, or <http://127.0.0.1:8000/docs> to try the API. Stop the server with `Ctrl+C`.
 
 The database is created as `presendex.db` in this folder the first time the app starts. Keep that file private; it contains attendance records.
+
+For how we can grow the database safely, see [the database plan](docs/DATABASE.md).
 
 ## Try the demo
 
