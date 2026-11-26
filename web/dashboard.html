@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#eaf8fa">
+  <title>School dashboard · PresenDex</title>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <script src="/assets/js/dashboard.js" defer></script>
+</head>
+<body class="dashboard-page">
+  <header class="dashboard-header">
+    <a class="brand" href="/"><img src="/logo.png" alt="PresenDex home"></a>
+    <div class="account-menu"><span id="account-label"></span><button class="button button-light button-small" id="logout-button" type="button">Sign out</button></div>
+  </header>
+  <main class="dashboard-main">
+    <section class="dashboard-welcome"><div><p class="eyebrow" id="role-label">School workspace</p><h1 id="welcome-title">Welcome to PresenDex</h1><p class="muted" id="welcome-copy">Your school attendance workspace.</p></div><span class="today-chip" id="today-label"></span></section>
+    <p id="dashboard-message" class="form-message" role="status" aria-live="polite"></p>
+
+    <section class="panel password-panel" id="password-panel" hidden>
+      <div><p class="eyebrow">One quick step</p><h2>Choose your own password</h2><p class="muted">Your admin gave you a temporary password. Change it before using your class workspace.</p></div>
+      <form id="password-form" class="stacked-form compact-form">
+        <label for="current-password">Temporary password</label><input id="current-password" type="password" autocomplete="current-password" required>
+        <label for="new-password">New password <span class="label-hint">At least 12 characters</span></label><input id="new-password" type="password" autocomplete="new-password" minlength="12" required>
+        <label for="confirm-new-password">Confirm new password</label><input id="confirm-new-password" type="password" autocomplete="new-password" minlength="12" required>
+        <button class="button button-primary" type="submit">Save new password</button>
+      </form>
+    </section>
+
+    <div id="workspace" hidden>
+      <section class="admin-grid" id="admin-tools" hidden>
+        <article class="panel"><p class="eyebrow">School setup</p><h2>Create a class</h2>
+          <form id="class-form" class="stacked-form">
+            <label for="class-name">Class name</label><input id="class-name" maxlength="80" placeholder="For example, Class 8A" required>
+            <label for="class-teacher">Class teacher <span class="label-hint">You can assign one later</span></label><select id="class-teacher"><option value="">Unassigned</option></select>
+            <button class="button button-primary" type="submit">Add class</button>
+          </form>
+        </article>
+        <article class="panel"><p class="eyebrow">School team</p><h2>Add a teacher</h2>
+          <form id="teacher-form" class="stacked-form">
+            <label for="teacher-name">Teacher's name</label><input id="teacher-name" maxlength="120" required>
+            <label for="teacher-username">Username</label><input id="teacher-username" minlength="3" maxlength="60" pattern="[A-Za-z0-9._-]+" required>
+            <label for="teacher-password">Temporary password <span class="label-hint">At least 12 characters</span></label><input id="teacher-password" type="password" minlength="12" maxlength="128" required>
+            <button class="button button-primary" type="submit">Create teacher account</button>
+          </form>
+          <p class="small-note">Teachers will be asked to change this password when they first sign in.</p>
+        </article>
+        <article class="panel class-list-panel"><p class="eyebrow">Your school</p><h2>Classes and class teachers</h2><div id="class-list" class="class-list"></div></article>
+      </section>
+
+      <section class="panel workspace-panel">
+        <div class="section-title-row"><div><p class="eyebrow">Class workspace</p><h2>Students and attendance</h2></div></div>
+        <div class="workspace-controls">
+          <div class="field-group"><label for="workspace-class">Class</label><select id="workspace-class"><option value="">Choose a class</option></select></div>
+          <div class="field-group"><label for="attendance-date">Attendance date</label><input id="attendance-date" type="date"></div>
+          <a id="csv-download" class="button button-secondary" href="#" aria-disabled="true">Download report</a>
+        </div>
+        <div id="class-empty" class="empty-state">Choose a class to see its students and attendance.</div>
+        <div id="class-tools" hidden>
+          <form id="student-form" class="inline-form">
+            <div><label for="student-name">Add a student to this class</label><input id="student-name" minlength="2" maxlength="120" placeholder="Student's name" required></div>
+            <button class="button button-primary" type="submit">Add student</button>
+          </form>
+          <div class="management-columns">
+            <section><h3>Student list</h3><div id="student-list" class="student-list"></div></section>
+            <section><div class="section-title-row"><h3>Daily attendance</h3><button class="button button-light button-small" id="load-attendance" type="button">Refresh</button></div><p class="small-note">Choose a status and save. Past dates can be corrected too.</p><div id="attendance-list" class="attendance-list"></div></section>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</body>
+</html>
