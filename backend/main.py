@@ -53,7 +53,7 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
-app.mount("/assets", StaticFiles(directory=PROJECT_ROOT / "web"), name="assets")
+app.mount("/assets", StaticFiles(directory=PROJECT_ROOT / "web" / "assets"), name="assets")
 
 
 class CheckInRequest(BaseModel):
