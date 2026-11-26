@@ -5,36 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#83cbd9">
   <title>PresenDex · Attendance</title>
-  <style>
-    :root { color-scheme: light; font-family: system-ui, sans-serif; color: #15252a; background: #f2f8f9; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; }
-    header { background: #fff; border-bottom: 1px solid #dce9eb; padding: 1rem clamp(1rem, 5vw, 4rem); }
-    header img { display: block; width: min(20rem, 75vw); height: auto; }
-    main { width: min(48rem, calc(100% - 2rem)); margin: 2.5rem auto; }
-    .card { padding: clamp(1.25rem, 4vw, 2rem); background: white; border: 1px solid #dce9eb; border-radius: 1.25rem; box-shadow: 0 12px 35px #17353d0c; }
-    h1 { margin: 0 0 .4rem; font-size: clamp(1.5rem, 4vw, 2rem); }
-    .intro, .hint { color: #53676d; }
-    form { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.5rem 0 1rem; }
-    label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
-    input { flex: 1 1 15rem; min-width: 0; padding: .85rem 1rem; border: 1px solid #a9bec3; border-radius: .7rem; font: inherit; }
-    button { padding: .85rem 1.15rem; border: 0; border-radius: .7rem; color: #fff; background: #176d7d; font: inherit; font-weight: 700; cursor: pointer; }
-    button:hover { background: #125a68; }
-    button:focus-visible, input:focus-visible { outline: 3px solid #83cbd9; outline-offset: 2px; }
-    #message { min-height: 1.5rem; font-weight: 650; }
-    #message.error { color: #a12d2d; }
-    #message.success { color: #176d4a; }
-    h2 { margin-top: 2rem; font-size: 1.15rem; }
-    .report-controls { align-items: end; margin: 1rem 0; }
-    .report-controls input { flex: 1 1 12rem; }
-    .download { display: inline-flex; align-items: center; min-height: 2.8rem; padding: .7rem 1rem; border: 1px solid #176d7d; border-radius: .7rem; color: #176d7d; font-weight: 700; text-decoration: none; }
-    .download:hover { background: #eef8f9; }
-    #report-summary { color: #53676d; }
-    ul { list-style: none; padding: 0; margin: 0; }
-    li { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 0; border-top: 1px solid #e7eff0; }
-    time { color: #53676d; }
-    .hint { font-size: .9rem; }
-  </style>
+  <link rel="stylesheet" href="/assets/css/styles.css">
+  <script src="/assets/js/app.js" defer></script>
 </head>
 <body>
   <header><img src="/logo.png" alt="PresenDex"></header>
@@ -60,84 +32,5 @@
       <ul id="attendance-list" aria-live="polite"></ul>
     </section>
   </main>
-  <script>
-    const form = document.querySelector('#checkin-form');
-    const input = document.querySelector('#learner-id');
-    const message = document.querySelector('#message');
-    const list = document.querySelector('#attendance-list');
-    const reportForm = document.querySelector('#report-form');
-    const reportDate = document.querySelector('#report-date');
-    const reportSummary = document.querySelector('#report-summary');
-    const downloadCsv = document.querySelector('#download-csv');
-
-    function localToday() {
-      const now = new Date();
-      const offset = now.getTimezoneOffset() * 60_000;
-      return new Date(now.getTime() - offset).toISOString().slice(0, 10);
-    }
-
-    async function refreshAttendance() {
-      const day = reportDate.value;
-      downloadCsv.href = `/attendance/export.csv?attendance_date=${encodeURIComponent(day)}`;
-      const response = await fetch(`/attendance?attendance_date=${encodeURIComponent(day)}`);
-      if (!response.ok) throw new Error('Could not load attendance records.');
-      const records = await response.json();
-      reportSummary.textContent = `${records.length} check-in${records.length === 1 ? '' : 's'} for ${day}.`;
-      list.replaceChildren();
-      if (records.length === 0) {
-        const empty = document.createElement('li');
-        empty.textContent = 'No check-ins for this date.';
-        list.append(empty);
-        return;
-      }
-      for (const record of records) {
-        const row = document.createElement('li');
-        const learner = document.createElement('strong');
-        learner.textContent = record.learner_id;
-        const checkedIn = document.createElement('time');
-        checkedIn.dateTime = record.checked_in_at;
-        checkedIn.textContent = new Date(record.checked_in_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        row.append(learner, checkedIn);
-        list.append(row);
-      }
-    }
-
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      message.className = '';
-      message.textContent = 'Saving check-in…';
-      try {
-        const response = await fetch('/attendance/check-in', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ learner_id: input.value.trim() })
-        });
-        const result = await response.json();
-        if (!response.ok) throw new Error(result.detail || 'Could not save check-in.');
-        message.textContent = result.status === 'checked_in' ? `${result.learner_id} checked in.` : `${result.learner_id} was already checked in today.`;
-        message.className = 'success';
-        await refreshAttendance();
-        input.select();
-      } catch (error) {
-        message.textContent = error.message || 'Could not reach the PresenDex service.';
-        message.className = 'error';
-      }
-    });
-
-    reportForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      try {
-        await refreshAttendance();
-      } catch (error) {
-        reportSummary.textContent = error.message;
-      }
-    });
-
-    reportDate.value = localToday();
-    refreshAttendance().catch((error) => {
-      message.textContent = error.message;
-      message.className = 'error';
-    });
-  </script>
 </body>
 </html>
