@@ -2,7 +2,7 @@
 
 ## Database in the current prototype
 
-The app creates these tables in a local SQLite database:
+The app creates these tables in a local SQLite database. New tables are created automatically when the app starts:
 
 | Table | Stores |
 | --- | --- |
@@ -10,6 +10,7 @@ The app creates these tables in a local SQLite database:
 | `classes` | Class names and the assigned class teacher |
 | `students` | Student names, random internal student codes, class membership, and active status |
 | `attendance_records` | One daily status per student, who marked it, and when it was last changed |
+| `attendance_schedules` | School-wide or class-specific default, weekday, and date-specific start times |
 
 Foreign keys connect the tables. A unique rule allows only one attendance record per student per day. Student records are deactivated instead of erased, so older attendance reports can still refer to them.
 
@@ -30,6 +31,15 @@ ESP32 terminal ─┘
 The web page and ESP32 should talk to the API, never directly to the database. The API stays on an always-on server, so records remain available when the school laptop is off. PostgreSQL is a client/server database; its server accepts application connections. SQLite is an embedded local file and its guidance recommends a client/server database when many computers need direct network access to the same database. [PostgreSQL connection model](https://www.postgresql.org/docs/current/connect-estab.html) · [SQLite usage guidance](https://www.sqlite.org/whentouse.html)
 
 SQLAlchemy is already used to describe the schema and connect to SQLite or PostgreSQL. Before moving real records to a hosted database, add Alembic migrations, test a backup-and-restore process, keep the connection secret outside GitHub, require HTTPS, add account recovery and sign-in rate limits, and agree with school staff about who can access records and how long to retain them.
+
+
+## Attendance overview and school start times
+
+The class workspace shows each active student's attendance rate and counts for present, late, absent, and excused records. The rate is present plus late divided by days with a recorded status; days with no saved attendance are not included. The marked-days selector lists dates with at least one attendance record so a teacher or admin can jump to them.
+
+Admins can set a general school start time, weekday rules from Monday to Friday, and one-off date rules. They can also set class-specific rules. Teachers can create and remove rules only for classes assigned to them. When rules overlap, date-specific rules win over weekday rules, which win over the general default; a class-specific rule wins over a school-wide rule at the same level. Times use the computer's local clock, so set the school computer's time zone correctly.
+
+The protected check-in API marks a new scan as present through the configured start time and late after it. If the student already has an attendance record for that day, a repeat scan returns the saved status without changing it. The webcam/ESP32 scanner still needs to be built; teachers can continue to edit attendance manually.
 
 ## QR-code approach
 
