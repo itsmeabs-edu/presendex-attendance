@@ -141,6 +141,10 @@ def dashboard_page() -> FileResponse:
 def logo() -> FileResponse:
     return FileResponse(PROJECT_ROOT / "logo.png", media_type="image/png")
 
+@app.get("/icon.png", include_in_schema=False)
+def favicon() -> FileResponse:
+    return FileResponse(PROJECT_ROOT / "icon.png", media_type="image/png")
+
 
 @app.get("/logo.svg", include_in_schema=False)
 def logo_svg() -> FileResponse:
