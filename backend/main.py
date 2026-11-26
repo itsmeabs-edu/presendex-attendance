@@ -1,14 +1,14 @@
 """Web pages and role-protected API routes for the PresenDex prototype."""
 
 import csv
-from datetime import date, datetime, timezone
-from io import BytesIO, StringIO
-
-import qrcode
 import os
 import re
 import secrets
+from datetime import date, datetime, timezone
+from io import BytesIO, StringIO
 from pathlib import Path
+
+import qrcode
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse
