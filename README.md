@@ -54,6 +54,6 @@ To get later code and page updates on the other computer, run `git pull` in its 
 
 ## Database and privacy
 
-The database currently has `accounts`, `classes`, `students`, and `attendance_records` tables. Passwords are stored as Argon2 hashes, never as readable text. The `.gitignore` rules exclude databases and environment files from the public repository.
+The database currently has `accounts`, `classes`, `students`, `attendance_records`, and `attendance_schedules` tables. Passwords are stored as Argon2 hashes, never as readable text. The `.gitignore` rules exclude databases and environment files from the public repository.
 
 This version is local-only. Before hosting it for a school, we still need to configure a strong session secret, use HTTPS, add account recovery and sign-in rate limits, plan schema migrations and backups, and get school approval for the student data and retention plan. Read [the database and QR-code plan](docs/DATABASE.md).
