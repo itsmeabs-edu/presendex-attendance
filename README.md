@@ -12,6 +12,7 @@ PresenDex is a school attendance project with separate admin and teacher workspa
 - Server-side class permissions: teachers can only manage classes assigned to them.
 - Attendance records that authorized teachers can add or correct for any date, with a CSV download.
 - Downloadable QR images for active students, containing only their student code.
+- Class attendance summaries, marked-day navigation, configurable school/class start times, and a protected present/late check-in API.
 - SQLite database stored locally on the computer running PresenDex.
 
 ## Project layout
