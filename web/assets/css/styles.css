@@ -170,7 +170,8 @@ input:focus, select:focus { outline: 3px solid #b9e4e9; outline-offset: 1px; bor
 .management-columns { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 1.2rem; }
 .student-list, .attendance-list { display: grid; gap: .55rem; }
 .student-row, .attendance-row { display: grid; align-items: center; gap: .55rem; padding: .7rem; border: 1px solid #e8eff0; border-radius: .75rem; background: #fcfefe; }
-.student-row { grid-template-columns: minmax(110px, 1fr) minmax(75px, .55fr) auto auto; }
+.student-row { grid-template-columns: minmax(110px, 1fr) minmax(75px, .55fr) auto auto auto; }
+.qr-download { white-space: nowrap; }
 .student-row input { min-height: 2.45rem; padding: .5rem .6rem; }
 .student-code { color: #7e9297; font-size: .75rem; }
 .active-toggle { display: flex; align-items: center; gap: .35rem; color: #667e84; font-size: .75rem; white-space: nowrap; }
@@ -214,5 +215,11 @@ input:focus, select:focus { outline: 3px solid #b9e4e9; outline-offset: 1px; bor
   .class-assignment select { grid-column: 1 / -1; grid-row: 2; }
   .class-assignment .button { grid-column: 2; grid-row: 1; }
   .inline-form { align-items: stretch; flex-direction: column; }
+  .student-row { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+  .student-row > input { grid-column: 1 / -1; }
+  .student-row > .student-code { grid-column: 1; }
+  .student-row > .active-toggle { grid-column: 2; }
+  .student-row > .qr-download { grid-column: 3; }
+  .student-row > button { grid-column: 4; }
   .account-menu > span { max-width: 8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
