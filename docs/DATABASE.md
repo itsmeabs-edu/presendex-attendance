@@ -33,8 +33,8 @@ SQLAlchemy is already used to describe the schema and connect to SQLite or Postg
 
 ## QR-code approach
 
-The app currently creates a random student code such as `A71C3F9D42B8`. A later QR card can encode that code, without putting a student's name or other identifying details in the QR image.
+Active students can now have a PNG QR image generated from their random student code. An admin or the teacher assigned to that student's class can download it from the student list. The image contains only the code, not the student's name. QR generation is implemented; webcam scanning and attendance check-in from a scan are still future work.
 
-The teacher signs in, chooses their class, then scans a student's code with the webcam. The browser sends the code to the API over HTTPS. The API finds the student, checks that the teacher is assigned to that class, and records the attendance once for that day. If the code is unknown or the student belongs to another class, the API rejects it.
+For scanning, a teacher signs in, chooses their class, and scans the code with the webcam. The browser or ESP32 terminal sends the decoded code to the API. The API finds the student, checks that the teacher is assigned to that class, and records attendance once for that day. A scanner device will need its own secure access method; a student QR code should identify a student, not authorize attendance changes.
 
-A printed QR code can be copied, so it should be treated as an identifier rather than proof of identity. For the school demo, a teacher should visually confirm the student. Later we can consider short-lived rotating codes or another school-approved check. We should not use face recognition for this project.
+A printed QR code can be copied, so it should be treated as an identifier rather than proof of identity. For the school demo, a teacher should visually confirm the student. We should not use face recognition for this project.
