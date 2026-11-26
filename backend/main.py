@@ -142,6 +142,11 @@ def logo() -> FileResponse:
     return FileResponse(PROJECT_ROOT / "logo.png", media_type="image/png")
 
 
+@app.get("/logo.svg", include_in_schema=False)
+def logo_svg() -> FileResponse:
+    return FileResponse(PROJECT_ROOT / "logo.svg", media_type="image/svg+xml")
+
+
 @app.get("/health")
 def health() -> dict[str, str]:
     return {"status": "ok", "service": "PresenDex"}
