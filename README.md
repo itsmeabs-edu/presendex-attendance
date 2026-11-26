@@ -1,6 +1,6 @@
 # PresenDex
 
-![PresenDex logo](logo.png)
+![PresenDex logo](logo.svg)
 
 PresenDex is a school attendance project with separate admin and teacher workspaces. The current version is a local prototype intended for made-up learner data while we build and learn.
 
