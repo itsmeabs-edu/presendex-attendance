@@ -2,39 +2,40 @@
 
 ![PresenDex logo](logo.png)
 
-PresenDex is a school attendance project built around an ESP32 terminal and a separate software service. This first software milestone is a small attendance app that runs on Fedora and Ubuntu 22.04.
+PresenDex is a school attendance project with separate admin and teacher workspaces. The current version is a local prototype intended for made-up learner data while we build and learn.
 
-## Current milestone
+## What is included
 
-- A Python API and simple web page record one check-in per learner ID per day and show date-filtered reports.
-- SQLite stores records locally on the computer running the app.
-- The prototype uses learner IDs only. Use made-up IDs while developing.
-- There is no camera or ESP32 connection yet. Later, a QR reader or ESP32 can send a learner ID to the same API.
+- One-time setup for the first admin account.
+- Admin tools to create classes and teacher accounts, assign class teachers, and manage students.
+- Teacher accounts created by the admin, with a required password change at first sign-in.
+- Server-side class permissions: teachers can only manage classes assigned to them.
+- Attendance records that authorized teachers can add or correct for any date, with a CSV download.
+- SQLite database stored locally on the computer running PresenDex.
 
 ## Project layout
 
-- `backend/main.py` — FastAPI routes and the local SQLite database.
-- `web/index.html` — page structure and content.
-- `web/assets/css/styles.css` — page appearance.
-- `web/assets/js/app.js` — check-in form, date filter, and report loading.
-- `docs/DATABASE.md` — the planned path from local prototype storage to a shared database.
+- `backend/main.py` — web pages and API routes, including role checks.
+- `backend/models.py` — database tables and relationships.
+- `backend/database.py` — SQLite or PostgreSQL connection setup.
+- `backend/schemas.py` — input validation.
+- `backend/security.py` — password hashing and login checks.
+- `web/index.html` — public project homepage.
+- `web/login.html`, `web/setup.html`, `web/dashboard.html` — sign-in, first admin setup, and school workspace.
+- `web/assets/css/styles.css` — shared page styles.
+- `web/assets/js/` — separate scripts for the homepage, login, setup, and dashboard.
+- `docs/DATABASE.md` — database and QR-code plan.
 
-The database stays on the computer where the app is running, so attendance records will not automatically appear on both computers. A shared online database and always-available hosting are later steps.
+## Run locally on Fedora or Ubuntu 22.04
 
-The project files are shared in a **public GitHub repository** so schools and other students can view and learn from the code. The logo, code, and setup notes are public; `presendex.db`, `.env`, and real attendance data must stay private and out of GitHub. GitHub keeps project files available across computers, but it does not sync attendance records or keep the app running by itself. The repository has no license file yet, so its reuse terms have not been selected.
-
-## Run on Fedora or Ubuntu 22.04
-
-To get the project on a computer, clone the public repository once:
+You need Python 3.10 or newer and Git. Clone the public repository once:
 
 ```bash
 git clone https://github.com/itsmeabs-edu/presendex-attendance.git
 cd presendex-attendance
 ```
 
-To bring in later project-file updates on that computer, run `git pull` from the project folder. When you make code changes on one computer, commit and push them to GitHub; then run `git pull` on the other. These steps sync code, notes, and the logo, not attendance records.
-
-You need Python 3.10 or newer. From the project folder:
+Set up and start the app:
 
 ```bash
 python3 -m venv .venv
@@ -43,23 +44,14 @@ python -m pip install -r requirements.txt
 uvicorn backend.main:app --reload
 ```
 
-Open <http://127.0.0.1:8000> for the attendance page, or <http://127.0.0.1:8000/docs> to try the API. Stop the server with `Ctrl+C`.
+Open <http://127.0.0.1:8000>. On the first run, choose **Set up your school** and create the admin account. First-admin setup is accepted only from this computer, and closes after the account is created. Later, sign in at <http://127.0.0.1:8000/login>.
 
-The database is created as `presendex.db` in this folder the first time the app starts. Keep that file private; it contains attendance records.
+The local database, `presendex.db`, is created on startup and excluded from Git. Stop the app with `Ctrl+C`. Use made-up names and IDs during development; this prototype is not ready for real student records or public internet hosting.
 
-For how we can grow the database safely, see [the database plan](docs/DATABASE.md).
+To get later code and page updates on the other computer, run `git pull` in its project folder. GitHub shares project files, not the local database.
 
-## Try the demo
+## Database and privacy
 
-On the home page, enter a made-up learner ID such as `DEMO-001`, then select **Check in**. The page shows the check-in result and the selected day's records. Repeating a check-in for the same ID that day is marked as a duplicate. Choose a date in **Attendance report** to view that day's records or download them as a CSV file.
+The database currently has `accounts`, `classes`, `students`, and `attendance_records` tables. Passwords are stored as Argon2 hashes, never as readable text. The `.gitignore` rules exclude databases and environment files from the public repository.
 
-The API also supports `POST /attendance/check-in` with `{"learner_id":"DEMO-001"}`, `GET /attendance?attendance_date=YYYY-MM-DD`, and `GET /attendance/export.csv?attendance_date=YYYY-MM-DD`.
-
-## Project roadmap
-
-1. Software API, operator page, and daily report export (this milestone).
-2. QR-code scanning using an external webcam.
-3. Connect ESP32 firmware to the API and show success or duplicate status on the LCD.
-4. Add access controls and choose a suitable always-on hosting option before using real attendance data.
-
-Do not put real student names or attendance data into this prototype. Before a real school trial, ask a teacher to approve the data and hosting plan.
+This version is local-only. Before hosting it for a school, we still need to configure a strong session secret, use HTTPS, add account recovery and sign-in rate limits, plan schema migrations and backups, and get school approval for the student data and retention plan. Read [the database and QR-code plan](docs/DATABASE.md).
