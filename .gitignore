@@ -1,5 +1,11 @@
 .venv/
 __pycache__/
 *.py[cod]
-presendex.db
+presendex.db*
+*.sqlite
+*.sqlite3
+*.db
+*.db-*
 .env
+.env.*
+!.env.example
