@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 112" role="img" aria-labelledby="title desc">
+  <title id="title">PresenDex</title>
+  <desc id="desc">PresenDex school attendance logo: a class roster with a completed checkmark.</desc>
+  <defs>
+    <linearGradient id="tile" x1="8" y1="8" x2="96" y2="96" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#168397"/>
+      <stop offset="1" stop-color="#0D6877"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(8 8)">
+    <rect width="96" height="96" rx="27" fill="url(#tile)"/>
+    <path d="M29 23h29a9 9 0 0 1 9 9v35a9 9 0 0 1-9 9H29a9 9 0 0 1-9-9V32a9 9 0 0 1 9-9Z" fill="#F8FEFE"/>
+    <path d="M33 38h18M33 49h13M33 60h10" stroke="#B5DDE1" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="57" cy="38" r="3" fill="#42B69D"/>
+    <circle cx="53" cy="49" r="3" fill="#42B69D"/>
+    <path d="m48 64 7 7 16-18" fill="none" stroke="#42B69D" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="72" cy="27" r="8" fill="#BFECE1"/>
+    <path d="m68.5 27 2.3 2.4 4.8-5" fill="none" stroke="#167B72" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="122" y="70" fill="#18373E" font-family="Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="49" font-weight="760" letter-spacing="-2.3">Presen<tspan fill="#178094">Dex</tspan></text>
+</svg>
