@@ -1,8 +1,8 @@
 """SQLAlchemy models for school accounts, classes, learners, and attendance."""
 
-from datetime import date, datetime, timezone
+from datetime import date, datetime, time, timezone
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, ForeignKey, Integer, String, Time, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -71,3 +71,19 @@ class AttendanceRecord(Base):
 
     student: Mapped[Student] = relationship(back_populates="attendance_records")
     marked_by: Mapped[Account] = relationship()
+
+
+class AttendanceSchedule(Base):
+    __tablename__ = "attendance_schedules"
+    __table_args__ = (
+        CheckConstraint("weekday IS NULL OR weekday BETWEEN 0 AND 4", name="ck_schedule_weekday"),
+        CheckConstraint("specific_date IS NULL OR weekday IS NULL", name="ck_schedule_scope"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    class_id: Mapped[int | None] = mapped_column(ForeignKey("classes.id", ondelete="CASCADE"), nullable=True, index=True)
+    specific_date: Mapped[date | None] = mapped_column(Date, nullable=True, index=True)
+    weekday: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    start_time: Mapped[time] = mapped_column(Time)
+    updated_by_id: Mapped[int] = mapped_column(ForeignKey("accounts.id", ondelete="RESTRICT"))
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utc_now, onupdate=utc_now)
