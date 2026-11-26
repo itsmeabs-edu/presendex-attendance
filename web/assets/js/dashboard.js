@@ -155,6 +155,13 @@ function renderStudentList(students) {
     code.className = 'student-code';
     code.textContent = student.student_code;
 
+    const qrDownload = document.createElement('a');
+    qrDownload.className = 'button button-light button-small qr-download';
+    qrDownload.href = `/api/students/${student.id}/qr.png`;
+    qrDownload.download = `presendex-${student.student_code}.png`;
+    qrDownload.textContent = 'Download QR';
+    qrDownload.setAttribute('aria-label', `Download QR code for ${student.full_name}`);
+
     const controls = document.createElement('span');
     controls.className = 'active-toggle';
     const active = document.createElement('input');
@@ -170,7 +177,9 @@ function renderStudentList(students) {
     save.type = 'submit';
     save.textContent = 'Save';
 
-    row.append(name, code, controls, save);
+    row.append(name, code);
+    if (student.is_active) row.append(qrDownload);
+    row.append(controls, save);
     row.addEventListener('submit', async (event) => {
       event.preventDefault();
       try {
