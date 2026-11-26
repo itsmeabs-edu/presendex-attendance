@@ -13,7 +13,7 @@ PresenDex is a school attendance project built around an ESP32 terminal and a se
 
 The database stays on the computer where the app is running, so attendance records will not automatically appear on both computers. A shared online database and always-available hosting are later steps.
 
-The project files are shared in a **public GitHub repository** so schools and other students can view and reuse the code. The logo, code, and setup notes are public; `presendex.db`, `.env`, and real attendance data must stay private and out of GitHub. GitHub keeps project files available across computers, but it does not sync attendance records or keep the app running by itself.
+The project files are shared in a **public GitHub repository** so schools and other students can view and learn from the code. The logo, code, and setup notes are public; `presendex.db`, `.env`, and real attendance data must stay private and out of GitHub. GitHub keeps project files available across computers, but it does not sync attendance records or keep the app running by itself. The repository has no license file yet, so its reuse terms have not been selected.
 
 ## Run on Fedora or Ubuntu 22.04
 
