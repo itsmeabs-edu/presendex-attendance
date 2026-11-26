@@ -162,7 +162,7 @@ input:focus, select:focus { outline: 3px solid #b9e4e9; outline-offset: 1px; bor
 .workspace-panel { margin-top: 1rem; }
 .section-title-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .section-title-row h2, .section-title-row h3 { margin-bottom: .3rem; }
-.workspace-controls { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(160px, .8fr) auto; align-items: end; gap: .8rem; margin: 1.2rem 0; }
+.workspace-controls { display: grid; grid-template-columns: minmax(140px, 1fr) minmax(140px, .8fr) minmax(180px, 1fr) auto; align-items: end; gap: .8rem; margin: 1.2rem 0; }
 .schedule-panel, .summary-panel { margin: 1rem 0; }
 .schedule-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: end; gap: .75rem; margin-top: 1rem; }
 .schedule-form .button { min-height: 2.85rem; }
