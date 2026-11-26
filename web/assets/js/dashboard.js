@@ -5,6 +5,8 @@ const attendanceDateInput = document.querySelector('#attendance-date');
 const classTools = document.querySelector('#class-tools');
 const classEmpty = document.querySelector('#class-empty');
 const csvDownload = document.querySelector('#csv-download');
+const markedDaysSelect = document.querySelector('#marked-days');
+const scheduleForm = document.querySelector('#schedule-form');
 
 let currentAccount = null;
 let availableClasses = [];
@@ -197,6 +199,136 @@ function renderStudentList(students) {
   }
 }
 
+
+function renderAttendanceSummary(summaries) {
+  const body = document.querySelector('#attendance-summary');
+  body.replaceChildren();
+  if (summaries.length === 0) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.colSpan = 7;
+    cell.textContent = 'No active students in this class.';
+    row.append(cell);
+    body.append(row);
+    return;
+  }
+  for (const summary of summaries) {
+    const row = document.createElement('tr');
+    const values = [summary.full_name, summary.attendance_rate === null ? 'No records' : `${summary.attendance_rate}%`, summary.present, summary.late, summary.absent, summary.excused, summary.days_recorded];
+    for (const value of values) {
+      const cell = document.createElement('td');
+      cell.textContent = String(value);
+      row.append(cell);
+    }
+    body.append(row);
+  }
+}
+
+async function loadAttendanceSummary() {
+  const classId = currentClassId();
+  if (!classId) return;
+  renderAttendanceSummary(await api(`/api/classes/${classId}/attendance/summary`));
+}
+
+function renderMarkedDays(dates) {
+  markedDaysSelect.replaceChildren();
+  addOption(markedDaysSelect, '', dates.length ? 'Choose a marked day' : 'No marked days yet');
+  for (const markedDate of dates) {
+    const label = new Date(`${markedDate}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+    addOption(markedDaysSelect, markedDate, label);
+  }
+  markedDaysSelect.value = dates.includes(attendanceDateInput.value) ? attendanceDateInput.value : '';
+}
+
+async function loadMarkedDays() {
+  const classId = currentClassId();
+  if (!classId) return;
+  renderMarkedDays(await api(`/api/classes/${classId}/attendance/dates`));
+}
+
+function syncScheduleScopeFields() {
+  const scope = document.querySelector('#schedule-scope').value;
+  document.querySelector('#schedule-weekday-group').hidden = scope !== 'weekday';
+  document.querySelector('#schedule-date-group').hidden = scope !== 'date';
+}
+
+function scheduleRuleLabel(rule) {
+  const target = rule.class_id === null ? 'Whole school' : 'This class';
+  let scope = 'General default';
+  if (rule.specific_date) scope = new Date(`${rule.specific_date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  else if (rule.weekday !== null) scope = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][rule.weekday];
+  return { target, scope };
+}
+
+function renderScheduleRules(rules) {
+  const list = document.querySelector('#schedule-list');
+  list.replaceChildren();
+  if (rules.length === 0) {
+    list.textContent = 'No start-time rules yet.';
+    return;
+  }
+  for (const rule of rules) {
+    const row = document.createElement('div');
+    row.className = 'schedule-rule';
+    const description = document.createElement('span');
+    const label = scheduleRuleLabel(rule);
+    description.textContent = `${label.target} · ${label.scope} · ${rule.start_time}`;
+    row.append(description);
+    if (currentAccount.role === 'admin' || rule.class_id === currentClassId()) {
+      const remove = document.createElement('button');
+      remove.className = 'button button-light button-small';
+      remove.type = 'button';
+      remove.textContent = 'Remove';
+      remove.setAttribute('aria-label', `Remove ${label.target.toLowerCase()} ${label.scope.toLowerCase()} start time`);
+      remove.addEventListener('click', async () => {
+        try {
+          await api(`/api/schedules/${rule.id}`, { method: 'DELETE' });
+          await loadSchedules();
+          showMessage('Start-time rule removed.', 'success');
+        } catch (error) { showMessage(error.message, 'error'); }
+      });
+      row.append(remove);
+    }
+    list.append(row);
+  }
+}
+
+async function loadSchedules() {
+  const classId = currentClassId();
+  if (!classId) return;
+  const query = new URLSearchParams({ for_date: attendanceDateInput.value });
+  const data = await api(`/api/classes/${classId}/schedules?${query}`);
+  renderScheduleRules(data.rules);
+  const effective = document.querySelector('#schedule-effective');
+  effective.textContent = data.effective
+    ? `Effective start time for ${attendanceDateInput.value}: ${data.effective.start_time} (computer's local time).`
+    : 'No start time is set; QR check-ins will be marked present.';
+}
+
+async function saveSchedule(event) {
+  event.preventDefault();
+  const classId = currentClassId();
+  if (!classId) return;
+  const scope = document.querySelector('#schedule-scope').value;
+  const targetClass = currentAccount.role === 'admin' && document.querySelector('#schedule-target').value === 'school' ? null : classId;
+  const payload = {
+    class_id: targetClass,
+    weekday: scope === 'weekday' ? Number(document.querySelector('#schedule-weekday').value) : null,
+    specific_date: scope === 'date' ? document.querySelector('#schedule-date').value : null,
+    start_time: document.querySelector('#schedule-start-time').value,
+  };
+  if (!payload.start_time || (scope === 'date' && !payload.specific_date)) {
+    showMessage('Choose a start time and complete the selected schedule details.', 'error');
+    return;
+  }
+  try {
+    await api('/api/schedules', { method: 'PUT', body: JSON.stringify(payload) });
+    document.querySelector('#schedule-start-time').value = '';
+    await loadSchedules();
+    showMessage('School start time saved.', 'success');
+  } catch (error) { showMessage(error.message, 'error'); }
+}
+
 function renderAttendance(records) {
   const attendanceList = document.querySelector('#attendance-list');
   attendanceList.replaceChildren();
@@ -242,6 +374,7 @@ function renderAttendance(records) {
           body: JSON.stringify({ attendance_date: attendanceDateInput.value, status: select.value }),
         });
         showMessage(`Attendance saved for ${record.full_name}.`, 'success');
+        await Promise.all([loadAttendanceSummary(), loadMarkedDays()]);
       } catch (error) {
         showMessage(error.message, 'error');
       }
@@ -262,8 +395,7 @@ async function loadAttendance() {
   if (!classId) return;
   updateReportLink();
   const query = new URLSearchParams({ attendance_date: attendanceDateInput.value });
-  const records = await api(`/api/classes/${classId}/attendance?${query}`);
-  renderAttendance(records);
+  renderAttendance(await api(`/api/classes/${classId}/attendance?${query}`));
 }
 
 async function loadSelectedClass() {
@@ -275,7 +407,7 @@ async function loadSelectedClass() {
   if (!hasClass) return;
 
   try {
-    await Promise.all([loadStudents(), loadAttendance()]);
+    await Promise.all([loadStudents(), loadAttendance(), loadMarkedDays(), loadAttendanceSummary(), loadSchedules()]);
   } catch (error) {
     showMessage(error.message, 'error');
   }
@@ -331,7 +463,7 @@ async function createStudent(event) {
     });
     nameInput.value = '';
     showMessage(`${student.full_name} was added. Student code: ${student.student_code}.`, 'success');
-    await Promise.all([loadStudents(), loadAttendance()]);
+    await Promise.all([loadStudents(), loadAttendance(), loadAttendanceSummary(), loadMarkedDays()]);
   } catch (error) {
     showMessage(error.message, 'error');
   }
@@ -410,8 +542,21 @@ document.querySelector('#teacher-form').addEventListener('submit', createTeacher
 document.querySelector('#student-form').addEventListener('submit', createStudent);
 document.querySelector('#password-form').addEventListener('submit', changePassword);
 document.querySelector('#load-attendance').addEventListener('click', () => loadAttendance().catch((error) => showMessage(error.message, 'error')));
+scheduleForm.addEventListener('submit', saveSchedule);
+document.querySelector('#schedule-scope').addEventListener('change', syncScheduleScopeFields);
+markedDaysSelect.addEventListener('change', () => {
+  if (!markedDaysSelect.value) return;
+  attendanceDateInput.value = markedDaysSelect.value;
+  loadAttendance().catch((error) => showMessage(error.message, 'error'));
+  loadSchedules().catch((error) => showMessage(error.message, 'error'));
+});
 classSelect.addEventListener('change', loadSelectedClass);
-attendanceDateInput.addEventListener('change', () => loadAttendance().catch((error) => showMessage(error.message, 'error')));
+attendanceDateInput.addEventListener('change', () => {
+  markedDaysSelect.value = [...markedDaysSelect.options].some((option) => option.value === attendanceDateInput.value) ? attendanceDateInput.value : '';
+  loadAttendance().catch((error) => showMessage(error.message, 'error'));
+  loadSchedules().catch((error) => showMessage(error.message, 'error'));
+});
+syncScheduleScopeFields();
 attendanceDateInput.value = localDateString();
 
 loadDashboard();
