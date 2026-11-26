@@ -25,6 +25,11 @@
     #message.error { color: #a12d2d; }
     #message.success { color: #176d4a; }
     h2 { margin-top: 2rem; font-size: 1.15rem; }
+    .report-controls { align-items: end; margin: 1rem 0; }
+    .report-controls input { flex: 1 1 12rem; }
+    .download { display: inline-flex; align-items: center; min-height: 2.8rem; padding: .7rem 1rem; border: 1px solid #176d7d; border-radius: .7rem; color: #176d7d; font-weight: 700; text-decoration: none; }
+    .download:hover { background: #eef8f9; }
+    #report-summary { color: #53676d; }
     ul { list-style: none; padding: 0; margin: 0; }
     li { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 0; border-top: 1px solid #e7eff0; }
     time { color: #53676d; }
@@ -44,7 +49,14 @@
       </form>
       <p id="message" role="status" aria-live="polite"></p>
       <p class="hint">Use made-up IDs during development. This prototype stores records on this computer.</p>
-      <h2>Today's check-ins</h2>
+      <h2>Attendance report</h2>
+      <form class="report-controls" id="report-form">
+        <label for="report-date">Attendance date</label>
+        <input id="report-date" type="date" required>
+        <button type="submit">Show report</button>
+        <a class="download" id="download-csv" href="/attendance/export.csv">Download CSV</a>
+      </form>
+      <p id="report-summary" aria-live="polite"></p>
       <ul id="attendance-list" aria-live="polite"></ul>
     </section>
   </main>
@@ -53,15 +65,28 @@
     const input = document.querySelector('#learner-id');
     const message = document.querySelector('#message');
     const list = document.querySelector('#attendance-list');
+    const reportForm = document.querySelector('#report-form');
+    const reportDate = document.querySelector('#report-date');
+    const reportSummary = document.querySelector('#report-summary');
+    const downloadCsv = document.querySelector('#download-csv');
+
+    function localToday() {
+      const now = new Date();
+      const offset = now.getTimezoneOffset() * 60_000;
+      return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+    }
 
     async function refreshAttendance() {
-      const response = await fetch('/attendance');
+      const day = reportDate.value;
+      downloadCsv.href = `/attendance/export.csv?attendance_date=${encodeURIComponent(day)}`;
+      const response = await fetch(`/attendance?attendance_date=${encodeURIComponent(day)}`);
       if (!response.ok) throw new Error('Could not load attendance records.');
       const records = await response.json();
+      reportSummary.textContent = `${records.length} check-in${records.length === 1 ? '' : 's'} for ${day}.`;
       list.replaceChildren();
       if (records.length === 0) {
         const empty = document.createElement('li');
-        empty.textContent = 'No check-ins yet.';
+        empty.textContent = 'No check-ins for this date.';
         list.append(empty);
         return;
       }
@@ -99,6 +124,16 @@
       }
     });
 
+    reportForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      try {
+        await refreshAttendance();
+      } catch (error) {
+        reportSummary.textContent = error.message;
+      }
+    });
+
+    reportDate.value = localToday();
     refreshAttendance().catch((error) => {
       message.textContent = error.message;
       message.className = 'error';
