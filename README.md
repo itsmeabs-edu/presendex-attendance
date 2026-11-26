@@ -6,7 +6,7 @@ PresenDex is a school attendance project built around an ESP32 terminal and a se
 
 ## Current milestone
 
-- A Python API and simple web page record one check-in per learner ID per day.
+- A Python API and simple web page record one check-in per learner ID per day and show date-filtered reports.
 - SQLite stores records locally on the computer running the app.
 - The prototype uses learner IDs only. Use made-up IDs while developing.
 - There is no camera or ESP32 connection yet. Later, a QR reader or ESP32 can send a learner ID to the same API.
@@ -41,13 +41,13 @@ The database is created as `presendex.db` in this folder the first time the app 
 
 ## Try the demo
 
-On the home page, enter a made-up learner ID such as `DEMO-001`, then select **Check in**. The page shows the check-in result and today's records. Repeating a check-in for the same ID that day is marked as a duplicate.
+On the home page, enter a made-up learner ID such as `DEMO-001`, then select **Check in**. The page shows the check-in result and the selected day's records. Repeating a check-in for the same ID that day is marked as a duplicate. Choose a date in **Attendance report** to view that day's records or download them as a CSV file.
 
-The API also supports `POST /attendance/check-in` with `{"learner_id":"DEMO-001"}` and `GET /attendance` to see today's records.
+The API also supports `POST /attendance/check-in` with `{"learner_id":"DEMO-001"}`, `GET /attendance?attendance_date=YYYY-MM-DD`, and `GET /attendance/export.csv?attendance_date=YYYY-MM-DD`.
 
 ## Project roadmap
 
-1. Software API and operator page (this milestone).
+1. Software API, operator page, and daily report export (this milestone).
 2. QR-code scanning using an external webcam.
 3. Connect ESP32 firmware to the API and show success or duplicate status on the LCD.
 4. Add access controls and choose a suitable always-on hosting option before using real attendance data.
