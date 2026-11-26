@@ -2,7 +2,9 @@
 
 import csv
 from datetime import date, datetime, timezone
-from io import StringIO
+from io import BytesIO, StringIO
+
+import qrcode
 import os
 import re
 import secrets
@@ -335,6 +337,35 @@ def list_students(
     get_accessible_class(db, account, class_id)
     students = db.scalars(select(Student).where(Student.class_id == class_id).order_by(Student.full_name)).all()
     return [student_summary(student) for student in students]
+
+
+@app.get("/api/students/{student_id}/qr.png", include_in_schema=False)
+def student_qr_code(
+    student_id: int,
+    account: Account = Depends(get_active_account),
+    db: Session = Depends(get_db),
+) -> Response:
+    student = db.get(Student, student_id)
+    if student is None or not student.is_active:
+        raise HTTPException(status_code=404, detail="Active student not found.")
+    get_accessible_class(db, account, student.class_id)
+
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(student.student_code)
+    qr.make(fit=True)
+    image = qr.make_image(fill_color="#163b40", back_color="white")
+    output = BytesIO()
+    image.save(output, format="PNG")
+    return Response(
+        content=output.getvalue(),
+        media_type="image/png",
+        headers={"Cache-Control": "private, no-store"},
+    )
 
 
 @app.post("/api/classes/{class_id}/students", status_code=201)
